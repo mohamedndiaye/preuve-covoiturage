@@ -20,7 +20,7 @@ export class GeoProvider implements Interfaces.ProviderInterface {
   }
 
   public async getTown(position: GeoInterface): Promise<PositionInterface> {
-    await this.validator.validate(position, 'position');
+    // await this.validator.validate(position, 'position'); // todo: add schema for position in validator
 
     const { lon, lat, insee, literal } = position;
 

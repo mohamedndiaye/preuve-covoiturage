@@ -4,10 +4,12 @@ import { GeoProviderInterfaceResolver } from '@pdc/provider-geo';
 import { ConfigInterfaceResolver } from '@ilos/config';
 
 import { PositionInterface } from '../interfaces/PositionInterface';
+import { Journey } from '../entities/journey';
+import { JourneyInterface } from '../interfaces/JourneyInterface';
 
-interface NormalizationTerritoryParamsInterface {
-  journey: any;
-}
+type NormalizationTerritoryParamsType = {
+  journey: JourneyInterface;
+};
 
 /*
  * Enrich journey with Territories
@@ -25,7 +27,7 @@ export class NormalizationTerritoryAction extends Parents.Action {
     super();
   }
 
-  public async handle(param: NormalizationTerritoryParamsInterface, context: Types.ContextType): Promise<void> {
+  public async handle(param: NormalizationTerritoryParamsType, context: Types.ContextType): Promise<Journey> {
     const paths = this.config.get('normalization.positionPaths');
 
     const territoriesEnrichedJourney = {
@@ -40,7 +42,7 @@ export class NormalizationTerritoryAction extends Parents.Action {
       }),
     );
 
-    // await this.kernel.notify( // todo: should be notify
+    // await this.kernel.notify(
     //   'crosscheck:process',
     //   {
     //     journey: territoriesEnrichedJourney,
@@ -54,13 +56,13 @@ export class NormalizationTerritoryAction extends Parents.Action {
     //   },
     // );
 
-    return;
+    return territoriesEnrichedJourney;
   }
 
-  public async findTerritories(position: PositionInterface, context: Types.ContextType): Promise<object> {
+  public async findTerritories(position: PositionInterface, context: Types.ContextType): Promise<object[]> {
     if ('insee' in position) {
       return this.kernel.call(
-        'territory:findByInsee',
+        'territory:listByInsee',
         {
           insee: position.insee,
         },
@@ -75,7 +77,7 @@ export class NormalizationTerritoryAction extends Parents.Action {
     }
     if ('lat' in position && 'lon' in position) {
       return this.kernel.call(
-        'territory:findByLatLon',
+        'territory:listByLatLon',
         {
           lat: position.lat,
           lon: position.lon,

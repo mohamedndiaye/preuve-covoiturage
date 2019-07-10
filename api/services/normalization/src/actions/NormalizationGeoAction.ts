@@ -5,10 +5,11 @@ import { ConfigInterfaceResolver } from '@ilos/config';
 
 import { PositionInterface } from '../interfaces/PositionInterface';
 import { Journey } from '../entities/journey';
+import { JourneyInterface } from '../interfaces/JourneyInterface';
 
-interface NormalizationGeoParamsInterface {
-  journey: Journey;
-}
+type NormalizationGeoParamsType = {
+  journey: JourneyInterface;
+};
 
 /*
  * Enrich journey with Geo data
@@ -18,6 +19,7 @@ interface NormalizationGeoParamsInterface {
   method: 'geo',
 })
 export class NormalizationGeoAction extends Parents.Action {
+  public readonly middlewares: (string | [string, any])[] = [['validate', ['normalization.geo']]];
   constructor(
     private kernel: Interfaces.KernelInterfaceResolver,
     private geoProvider: GeoProviderInterfaceResolver,
@@ -26,16 +28,18 @@ export class NormalizationGeoAction extends Parents.Action {
     super();
   }
 
-  public async handle(param: NormalizationGeoParamsInterface, context: Types.ContextType): Promise<void> {
+  public async handle(param: NormalizationGeoParamsType, context: Types.ContextType): Promise<Journey> {
     const paths = this.config.get('normalization.positionPaths');
 
-    let normalizedJourney = {};
+    let normalizedJourney: JourneyInterface;
 
-    await Promise.all(paths.map(async (path) => {
-      const position = _.get(param.journey, path);
-      const positionEnrichedWithTown = await this.findTown(position);
-      normalizedJourney = this.processTownResponse(param.journey, path, position, positionEnrichedWithTown);
-    }));
+    await Promise.all(
+      paths.map(async (path) => {
+        const position = _.get(param.journey, path);
+        const positionEnrichedWithTown = await this.findTown(position);
+        normalizedJourney = this.processTownResponse(param.journey, path, position, positionEnrichedWithTown);
+      }),
+    );
 
     await this.kernel.notify(
       'normalization:territory',
@@ -53,11 +57,16 @@ export class NormalizationGeoAction extends Parents.Action {
       },
     );
 
-    return;
+    return normalizedJourney;
   }
 
   private async findTown(position: PositionInterface): Promise<PositionInterface> {
-    const foundPosition = await this.geoProvider.getTown({ lon: position.lon, lat: position.lat, insee: position.insee, literal: position.literal });
+    const foundPosition = await this.geoProvider.getTown({
+      lon: position.lon,
+      lat: position.lat,
+      insee: position.insee,
+      literal: position.literal,
+    });
     return {
       ...position,
       ...foundPosition,
@@ -67,7 +76,12 @@ export class NormalizationGeoAction extends Parents.Action {
   /**
    * Complete position with data relative to town
    */
-  private processTownResponse(journey, path, position: PositionInterface, determinedPosition: PositionInterface) {
+  private processTownResponse(
+    journey: JourneyInterface,
+    path: string,
+    position: PositionInterface,
+    determinedPosition: PositionInterface,
+  ): JourneyInterface {
     // console.log(journey, path, position, determinedPosition)
     if (determinedPosition.lon && !position.lon) {
       position.lon = determinedPosition.lon;

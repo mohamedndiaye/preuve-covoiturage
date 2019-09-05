@@ -45,6 +45,7 @@ import { LoginUserAction } from './actions/LoginUserAction';
 import { ChangeRoleUserAction } from './actions/ChangeRoleUserAction';
 import { RegisterUserAction } from './actions/RegisterUserAction';
 import { UserRepositoryProvider } from './providers/UserRepositoryProvider';
+import { MigrateCommand } from './commands/MigrateCommand';
 
 @serviceProvider({
   config: __dirname,
@@ -93,16 +94,17 @@ import { UserRepositoryProvider } from './providers/UserRepositoryProvider';
     templatePath: path.resolve(__dirname, 'templates'),
     templateMeta: 'template',
   },
+  commands: [MigrateCommand],
 })
 export class ServiceProvider extends AbstractServiceProvider {
   readonly extensions: NewableType<ExtensionInterface>[] = [
-    ConfigExtension,
-    ConnectionManagerExtension,
+    // ConfigExtension,
+    // ConnectionManagerExtension,
     ValidatorExtension,
-    TemplateExtension,
-    NotificationExtension,
-    Extensions.Middlewares,
-    Extensions.Providers,
-    Extensions.Handlers,
+    // TemplateExtension,
+    // NotificationExtension,
+    // Extensions.Middlewares,
+    // Extensions.Providers,
+    // Extensions.Handlers,
   ];
 }

@@ -43,7 +43,7 @@ export class UsersListComponent extends DestroyObservable implements OnInit {
      });
      */
     this.userService
-      .delete(user)
+      .delete(user._id)
       .pipe(takeUntil(this.destroy$))
       .subscribe(
         () => {
